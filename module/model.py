@@ -43,7 +43,7 @@ class Seq2seq(keras.Model):
             decoder_input = self.embedding(responses)[:, :-1, :]  # [batch, len_decoder, embedding_size]
 
             # encoder_states: [num_layers] * tensor(batch, output_size)
-            _, encoder_states = self.encoder(encoder_input)
+            encoder_outputs, encoder_states = self.encoder(encoder_input)
 
             ta = tf.TensorArray(size=0, dtype=tf.int64, dynamic_size=True)
 
