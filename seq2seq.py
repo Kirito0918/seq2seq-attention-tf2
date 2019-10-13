@@ -15,8 +15,8 @@ parser.add_argument('--validset_path', dest='validset_path', default='data/raw/v
 parser.add_argument('--testset_path', dest='testset_path', default='data/raw/testset.txt', type=str, help='测试集位置')
 parser.add_argument('--embed_path', dest='embed_path', default='data/embed.txt', type=str, help='词向量位置')
 parser.add_argument('--result_path', dest='result_path', default='result', type=str, help='测试结果位置')
-parser.add_argument('--print_per_step', dest='print_per_step', default=1, type=int, help='每更新多少次参数summary学习情况')
-parser.add_argument('--log_per_step', dest='log_per_step', default=30000, type=int, help='每更新多少次参数保存模型')
+parser.add_argument('--print_per_step', dest='print_per_step', default=100, type=int, help='每更新多少次参数summary学习情况')
+parser.add_argument('--log_per_step', dest='log_per_step', default=20000, type=int, help='每更新多少次参数保存模型')
 parser.add_argument('--log_path', dest='log_path', default='log', type=str, help='记录模型位置')
 parser.add_argument('--inference', dest='inference', default=False, type=bool, help='是否测试')  #
 parser.add_argument('--max_len', dest='max_len', default=60, type=int, help='测试时最大解码步数')
@@ -96,10 +96,13 @@ def main():
         for epoch in range(args.max_epoch):
             for data in dp_train.get_batch_data():
 
+                start_time = time.time()
                 loss, ppl = train(model, data, optimizer)
+                use_time = time.time() - start_time
 
                 if global_step % args.print_per_step == 0:
-                    print('global_step: %d, 训练集上的损失: %g, 训练集上的困惑度: %g' % (global_step, loss, ppl))
+                    print('global_step: %d, loss: %g, ppl: %g, time: %gs'
+                          % (global_step, loss, ppl, use_time))
                     with summary_writer.as_default():
                         tf.summary.scalar('train_loss', loss, global_step)
                         tf.summary.scalar('train_ppl', ppl, global_step)
@@ -161,7 +164,7 @@ def main():
                 data = {}
                 data['post'] = str_posts[idx]
                 data['response'] = str_responses[idx]
-                data['result'] = sentence_processor(result)
+                data['result'] = sentence_processor.index2word(result)
                 fw.write(json.dumps(data) + '\n')
 
         fw.close()
